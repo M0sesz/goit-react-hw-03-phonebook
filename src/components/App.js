@@ -1,23 +1,29 @@
-import React, { useState, useEffect } from 'react';
+import React, { Component } from 'react';
 import { nanoid } from 'nanoid';
 import ContactForm from './Phonebook/ContactForm';
 import ContactList from './Phonebook/ContactList';
 import Filter from './Phonebook/Filter';
 
-const saveContactsToLocalStorage = contacts => {
-  localStorage.setItem('contacts', JSON.stringify(contacts));
-};
+class App extends Component {
+  constructor(props) {
+    super(props);
+    this.state = {
+      contacts: [],
+      filter: '',
+    };
+  }
 
-const App = () => {
-  const [contacts, setContacts] = useState([]);
-  const [filter, setFilter] = useState('');
-
-  useEffect(() => {
+  componentDidMount() {
     const storedContacts = JSON.parse(localStorage.getItem('contacts') || '[]');
-    setContacts(storedContacts);
-  }, []);
+    this.setState({ contacts: storedContacts });
+  }
 
-  const handleAddContact = newContact => {
+  saveContactsToLocalStorage = contacts => {
+    localStorage.setItem('contacts', JSON.stringify(contacts));
+  };
+
+  handleAddContact = newContact => {
+    const { contacts } = this.state;
     if (
       contacts.some(
         contact => contact.name.toLowerCase() === newContact.name.toLowerCase()
@@ -29,38 +35,42 @@ const App = () => {
 
     const contactWithId = { ...newContact, id: nanoid() };
     const updatedContacts = [...contacts, contactWithId];
-    setContacts(updatedContacts);
-    saveContactsToLocalStorage(updatedContacts); // Зберігаємо контакти у localStorage
+    this.setState({ contacts: updatedContacts });
+    this.saveContactsToLocalStorage(updatedContacts);
   };
 
-  const handleDeleteContact = contactId => {
+  handleDeleteContact = contactId => {
+    const { contacts } = this.state;
     const updatedContacts = contacts.filter(
       contact => contact.id !== contactId
     );
-    setContacts(updatedContacts);
-    saveContactsToLocalStorage(updatedContacts); // Зберігаємо контакти у localStorage
+    this.setState({ contacts: updatedContacts });
+    this.saveContactsToLocalStorage(updatedContacts);
   };
 
-  const handleFilterChange = event => {
-    setFilter(event.target.value);
+  handleFilterChange = event => {
+    this.setState({ filter: event.target.value });
   };
 
-  const filteredContacts = contacts.filter(contact =>
-    contact.name.toLowerCase().includes(filter.toLowerCase())
-  );
+  render() {
+    const { contacts, filter } = this.state;
+    const filteredContacts = contacts.filter(contact =>
+      contact.name.toLowerCase().includes(filter.toLowerCase())
+    );
 
-  return (
-    <>
-      <h1>Phonebook</h1>
-      <ContactForm addContact={handleAddContact} />
-      <h2>Contacts</h2>
-      <Filter filter={filter} handleFilterChange={handleFilterChange} />
-      <ContactList
-        contacts={filteredContacts}
-        deleteContact={handleDeleteContact}
-      />
-    </>
-  );
-};
+    return (
+      <>
+        <h1>Phonebook</h1>
+        <ContactForm addContact={this.handleAddContact} />
+        <h2>Contacts</h2>
+        <Filter filter={filter} handleFilterChange={this.handleFilterChange} />
+        <ContactList
+          contacts={filteredContacts}
+          deleteContact={this.handleDeleteContact}
+        />
+      </>
+    );
+  }
+}
 
 export default App;
